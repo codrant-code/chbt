@@ -1,5 +1,5 @@
 (function () {
-  console.log("🤖 Chatbot Widget Loaded");
+  console.log("🤖 Chatbot Widget v2 Loaded");
 
   const SUPABASE_URL = "https://nwldvgafmyaagmyezena.supabase.co";
   const SUPABASE_KEY = "sb_publishable_gWMY1sQRn3fqip0JfAQPRQ_F79rlYyZ";
@@ -43,7 +43,7 @@
     let debounceTimer;
 
     // =========================
-    // STYLE
+    // STYLES
     // =========================
     const style = document.createElement("style");
     style.innerHTML = `
@@ -80,7 +80,6 @@
         padding: 10px;
         color: #fff;
         font-weight: bold;
-        background: #007bff;
       }
 
       #cw-messages {
@@ -123,12 +122,10 @@
       #cw-input button {
         padding: 10px;
         border: none;
-        background: #007bff;
         color: #fff;
         cursor: pointer;
       }
 
-      /* Suggestions */
       #cw-suggestions {
         position: absolute;
         bottom: 50px;
@@ -189,6 +186,7 @@
     const button = box.querySelector("button");
     const messages = box.querySelector("#cw-messages");
     const suggestionsBox = box.querySelector("#cw-suggestions");
+    const header = box.querySelector("#cw-header");
 
     function addMessage(text, type) {
       const div = document.createElement("div");
@@ -223,7 +221,7 @@
     }
 
     // =========================
-    // 🔥 FIXED DB SUGGESTIONS (IMPORTANT)
+    // 🔥 FAQ SUGGESTIONS (DB ONLY FIXED)
     // =========================
     async function fetchSuggestions(keyword) {
       const clean = keyword.trim();
@@ -233,7 +231,8 @@
         return;
       }
 
-      // 1️⃣ PRIMARY: prefix match (h → all h*, what → what*)
+      console.log("Searching DB for:", clean);
+
       let { data, error } = await sb
         .from("faq_questions")
         .select("question")
@@ -242,12 +241,12 @@
         .limit(8);
 
       if (error) {
-        console.error(error);
+        console.error("FAQ error:", error);
         hideSuggestions();
         return;
       }
 
-      // 2️⃣ FALLBACK: contains match if prefix fails
+      // fallback search if prefix fails
       if (!data || data.length === 0) {
         const res = await sb
           .from("faq_questions")
@@ -308,6 +307,21 @@
     });
 
     button.onclick = sendMessage;
+
+    // =========================
+    // THEME FROM DB (FIXED)
+    // =========================
+    const { data: themeData } = await sb
+      .from("chatbot_signups")
+      .select("theme_color")
+      .eq("customer_id", customer_id)
+      .single();
+
+    if (themeData?.theme_color) {
+      icon.style.background = themeData.theme_color;
+      header.style.background = themeData.theme_color;
+      button.style.background = themeData.theme_color;
+    }
   }
 
   init();
